@@ -5,6 +5,7 @@ Created on Jan 12 12:22:00 2023
 @author: J. Rafael Otaíza P.
 Proyecto Vibraciones CSO - Modulo 01
 """
+__version__ = '1.0'
 
 import os
 from datetime import datetime 
