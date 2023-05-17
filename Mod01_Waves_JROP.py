@@ -5,7 +5,6 @@ Created on Jan 12 12:22:00 2023
 @author: J. Rafael Otaíza P.
 Proyecto Vibraciones CSO - Modulo 01
 """
-__version__ = '1.0'
 
 import os
 from datetime import datetime 
@@ -18,7 +17,9 @@ import math
 import sys
 import warnings
 
-warnings.filterwarnings("ignore", category=FutureWarning)
+#warnings.filterwarnings("ignore", category=FutureWarning)
+
+__version__ = '1.1'
 
 def Save_Mod01():
     return
@@ -70,11 +71,14 @@ def Load_Seed(directoryPath, file,scale=False):
         scaler = MinMaxScaler(feature_range=(-1, 1))
         # transform data
         s_tmp = data.iloc[:, 1:].copy()
-
         s_tmp = pd.DataFrame(scaler.fit_transform(s_tmp),columns=s_tmp.columns)
         data.iloc[:,1:] = s_tmp.iloc[:,0:]
     
-    #print(data)
+    #print(data.iloc[0,0])
+    #if data.iloc[0,0] == 'Time':
+    #    data = data.drop([0])
+    
+    data.iloc[:, 0] = data.iloc[:, 0]-data.iloc[0, 0]
     return data
     
 def Offset(data_raw, offset_lim=0.1):
@@ -123,9 +127,10 @@ def Seed_Waveform(data,t0,t1,name,scale=False,save=False):
 ##   
 ##    return pd.DataFrame(np.array(H).round(decimals=3),columns=['X','Y','Z'])
 
-def Ideal_Test(seed,n,Delay):
+def Ideal_Test(seed,n,Delay,absolute):
     amp = []
     seed_tmp = seed.copy()
+    seed_tmp['SV'] = np.sqrt(seed_tmp.iloc[:,1]**2 + seed_tmp.iloc[:,2]**2 + seed_tmp.iloc[:,3]**2)  
     div = 2
     mult = 1
     if seed['Time'].iloc[-1] < 0.2:
@@ -134,8 +139,9 @@ def Ideal_Test(seed,n,Delay):
     
     spacer2 = np.zeros(((mult*n//div)*seed_tmp.shape[0],6), dtype=float)
     dt = round(seed_tmp.iloc[1,0]-seed_tmp.iloc[0,0],4)
-
+    #dt = seed_tmp.iloc[1,0]-seed_tmp.iloc[0,0]
     spacer2[:,0] = np.arange(0,spacer2.shape[0]*dt,dt)
+    #spacer2[:,0] = np.arange(seed_tmp.iloc[0,0],spacer2.shape[0]*dt + seed_tmp.iloc[0,0],dt)
     
     if np.isscalar(Delay) == True:
         d = Delay
@@ -143,41 +149,56 @@ def Ideal_Test(seed,n,Delay):
             #indx = np.where(np.isclose(h*d, spacer2[:,0], rtol=1e-04, atol=1e-03, equal_nan=True))[0][0]
             indx = np.where(np.isclose(h*d, spacer2[:,0], rtol=1e-04, equal_nan=True))[0][0]
             #print(indx, spacer2[indx,0], np.isclose(h*d, spacer2[:,0], rtol=1e-04, equal_nan=True))
-                
-            spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1 :].to_numpy()
+            
+            #spacer2[:,0] = np.arange(0,spacer2.shape[0]*dt,dt)
+            spacer2[indx:(indx+seed_tmp.shape[0]),1:5] = spacer2[indx:(indx+seed_tmp.shape[0]),1:5] + seed_tmp.iloc[:,1 :].to_numpy()
         
-        spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)  
+        #spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)  
         spacer2[:,5] = d
-        amp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
+        if absolute is False:
+            amp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
+        else:
+            amp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
             
         return pd.DataFrame(spacer2,columns=['Time','Filter_X','Filter_Y','Filter_Z','Filter_SV','Delay']), pd.DataFrame([amp],columns=['Delay','Amp_X','Amp_Y','Amp_Z','Amp_SV'])
     else:
         Vib = pd.DataFrame() 
         
+        #print(seed_tmp)
+        
         for d in Delay:
             spacer2 = np.zeros(((mult*n//div)*seed_tmp.shape[0],5), dtype=float)
             dt = round(seed_tmp.iloc[1,0]-seed_tmp.iloc[0,0],4)
+            #dt = seed_tmp.iloc[1,0]-seed_tmp.iloc[0,0]
             spacer2[:,0] = np.arange(0,spacer2.shape[0]*dt,dt)
+            #spacer2[:,0] = np.arange(seed_tmp.iloc[0,0],spacer2.shape[0]*dt + seed_tmp.iloc[0,0],dt)
             
             for h in range(0,n):
                 #indx = np.where(np.isclose(h*delay, spacer2[:,0], rtol=1e-04, atol=1e-03, equal_nan=True))[0][0]
                 indx = np.where(np.isclose(h*d, spacer2[:,0], rtol=1e-04, equal_nan=True))[0][0]
-                spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1 :].to_numpy()
+                #spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1 :].to_numpy()
+                
+                spacer2[indx:(indx+seed_tmp.shape[0]),1:5] = spacer2[indx:(indx+seed_tmp.shape[0]),1:5] + seed_tmp.iloc[:,1:5].to_numpy()
             
-            spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)
+            #spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)
             vib = pd.DataFrame(spacer2,columns=['Time','Filter_X','Filter_Y','Filter_Z','Filter_SV'])
             vib['Delay'] = d
             Vib = pd.concat([Vib,vib])
             
-            amp_tmp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
+            if absolute is False:
+                amp_tmp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
+            else:
+                amp_tmp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
+
             amp.append(amp_tmp)
-        
+
         del spacer2, vib
         
+        #print(Vib)
         #Vib = Vib.reset_index(drop=True)
         return Vib, pd.DataFrame(amp,columns=['Delay','Amp_X','Amp_Y','Amp_Z','Amp_SV'])
 
-def Special_ppvFreq(data, hei_rop=1, dis_rop=25):
+def Special_ppvFreq(data, hei_rop=0.1, dis_rop=25):
     ### PEAK FINDING ALGORITHM ###
     min_t = min(data["Time"])
     avg_z = np.mean(data["Filter_Z"])
@@ -213,7 +234,6 @@ def Special_ppvFreq(data, hei_rop=1, dis_rop=25):
 
     freq_z = []
     for i in np.concatenate((peaks_zp,peaks_zm)):
-        #print(max(zc_z[zc_z < i]), min(zc_z[zc_z > i]), i)
         R = data['Time'][min(zc_z[zc_z > i], default=0)]
         L = data['Time'][max(zc_z[zc_z < i], default=0)]
         freq_z.append(1/(2*(R-L)))
@@ -226,19 +246,28 @@ def Special_ppvFreq(data, hei_rop=1, dis_rop=25):
 
     peak_out_x = pd.DataFrame(peak_out_x)
     peak_out_x.columns = ["Frequency", "peak_X"]
+    index_x = peak_out_x[peak_out_x["Frequency"] < 0].index
+    peak_out_x.drop(index_x , inplace=True)
+    peak_out_x.reset_index(drop=True)
 
     peak_out_y = pd.DataFrame(peak_out_y)
     peak_out_y.columns = ["Frequency", "peak_Y"]
+    index_y = peak_out_y[peak_out_y["Frequency"] < 0].index
+    peak_out_y.drop(index_y , inplace=True)
+    peak_out_y.reset_index(drop=True)
 
     peak_out_z = pd.DataFrame(peak_out_z)
     peak_out_z.columns = ["Frequency", "peak_Z"]
-
+    index_z = peak_out_z[peak_out_z["Frequency"] < 0].index
+    peak_out_z.drop(index_z , inplace=True)
+    peak_out_z.reset_index(drop=True)
+    
     return peak_out_x, peak_out_y, peak_out_z
     
     ### END OF PEAK FINDING ###
 
 def Special_DomFreq(seed,n,Delay):
-    vib, amp = Ideal_Test(seed,n,Delay)
+    vib, amp = Ideal_Test(seed,n,Delay,absolute=True)
   
     fft_rop = []
     
@@ -278,15 +307,80 @@ def Special_DomFreq(seed,n,Delay):
             
         return pd.DataFrame(fft_rop,columns=['Delay','FreqDom_X','FreqDom_Y','FreqDom_Z'])
 
+def Special_Acel(seed,n,Delay):
+    vib, amp = Ideal_Test(seed,n,Delay,absolute=True)
+    
+    if np.isscalar(Delay) == True:
+        x = vib2['Time'].values
+        y1 = vib2['Filter_X'].values
+        y2 = vib2['Filter_Y'].values
+        y3 = vib2['Filter_Z'].values
+
+        dy1 = np.zeros(y1.shape,np.float)
+        dy1[0:-1] = np.diff(y1)/np.diff(x)
+        dy1[-1] = (y1[-1] - y1[-2])/(x[-1] - x[-2])
+            
+        dy2 = np.zeros(y2.shape,np.float)
+        dy2[0:-1] = np.diff(y2)/np.diff(x)
+        dy2[-1] = (y2[-1] - y2[-2])/(x[-1] - x[-2])
+            
+        dy3 = np.zeros(y3.shape,np.float)
+        dy3[0:-1] = np.diff(y3)/np.diff(x)
+        dy3[-1] = (y3[-1] - y3[-2])/(x[-1] - x[-2])
+            
+        dysv = np.sqrt(dy1**2 + dy2**2 + dy3**2)
+            
+        acel_tmp = [d, max(dy1)/(9.8), max(dy2)/(9.8), max(dy3)/(9.8), 
+                    np.sqrt(max(dy1)**2 + max(dy2)**2 + max(dy3)**2)/(9.8)]
+                    
+        return pd.DataFrame(acel_tmp,columns=['Delay','Acel_X','Acel_Y','Acel_Z','Acel_SV'])
+    else:
+        acel = []
+
+        for d in Delay:
+            vib2 = vib[vib['Delay']==d].iloc[:,0:4].copy()
+            vib2 = vib2.reset_index(drop=True)
+
+            x = vib2['Time'].values
+            y1 = vib2['Filter_X'].values
+            y2 = vib2['Filter_Y'].values
+            y3 = vib2['Filter_Z'].values
+
+            dy1 = np.zeros(y1.shape,np.float)
+            dy1[0:-1] = np.diff(y1)/np.diff(x)
+            dy1[-1] = (y1[-1] - y1[-2])/(x[-1] - x[-2])
+            
+            dy2 = np.zeros(y2.shape,np.float)
+            dy2[0:-1] = np.diff(y2)/np.diff(x)
+            dy2[-1] = (y2[-1] - y2[-2])/(x[-1] - x[-2])
+            
+            dy3 = np.zeros(y3.shape,np.float)
+            dy3[0:-1] = np.diff(y3)/np.diff(x)
+            dy3[-1] = (y3[-1] - y3[-2])/(x[-1] - x[-2])
+            
+            dysv = np.sqrt(dy1**2 + dy2**2 + dy3**2)
+            
+            acel_tmp = [d, max(dy1)/(9.8), max(dy2)/(9.8), max(dy3)/(9.8), 
+                        np.sqrt(max(dy1)**2 + max(dy2)**2 + max(dy3)**2)/(9.8)]
+            acel.append(acel_tmp)
+            
+        return pd.DataFrame(acel,columns=['Delay','Acel_X','Acel_Y','Acel_Z','Acel_SV'])
+    
 def Special_Disp(seed,n,Delay):
-    vib, amp = Ideal_Test(seed,n,Delay)
+    vib, amp = Ideal_Test(seed,n,Delay,absolute=True)
     
     if np.isscalar(Delay) == True:
         peak_out_x, peak_out_y, peak_out_z = Special_ppvFreq(vib, hei_rop=0.1, dis_rop=25)
-
-        disp_x = max(peak_out_x['peak_X']/peak_out_x['Frequency'])
-        disp_y = max(peak_out_y['peak_Y']/peak_out_y['Frequency'])
-        disp_z = max(peak_out_z['peak_Z']/peak_out_z['Frequency'])
+        
+        index_x = peak_out_x[peak_out_x['peak_X'] == max(peak_out_x['peak_X'])].index
+        disp_x = peak_out_x['peak_X'][index_x]/(2*math.pi*peak_out_x['Frequency'][index_x])
+            
+        index_y = peak_out_y[peak_out_y['peak_Y'] == max(peak_out_y['peak_Y'])].index
+        disp_y = peak_out_y['peak_Y'][index_y]/(2*math.pi*peak_out_y['Frequency'][index_y])
+            
+        index_z = peak_out_z[peak_out_z['peak_Z'] == max(peak_out_z['peak_Z'])].index
+        disp_z = peak_out_z['peak_Z'][index_z]/(2*math.pi*peak_out_z['Frequency'][index_z])
+        
         disp_sv = np.sqrt(disp_x**2 + disp_y**2 + disp_z**2)
         
         disp = [Delay, disp_x, disp_y, disp_z, disp_sv]
@@ -302,9 +396,15 @@ def Special_Disp(seed,n,Delay):
                      
             peak_out_x, peak_out_y, peak_out_z = Special_ppvFreq(vib2, hei_rop=0.1, dis_rop=25)
 
-            disp_x = max(peak_out_x['peak_X']/peak_out_x['Frequency'])
-            disp_y = max(peak_out_y['peak_Y']/peak_out_y['Frequency'])
-            disp_z = max(peak_out_z['peak_Z']/peak_out_z['Frequency'])
+            index_x = peak_out_x[peak_out_x['peak_X'] == max(peak_out_x['peak_X'])].index[0]
+            disp_x = peak_out_x['peak_X'][index_x]/(2*math.pi*peak_out_x['Frequency'][index_x])
+
+            index_y = peak_out_y[peak_out_y['peak_Y'] == max(peak_out_y['peak_Y'])].index[0]
+            disp_y = peak_out_y['peak_Y'][index_y]/(2*math.pi*peak_out_y['Frequency'][index_y])
+
+            index_z = peak_out_z[peak_out_z['peak_Z'] == max(peak_out_z['peak_Z'])].index[0]
+            disp_z = peak_out_z['peak_Z'][index_z]/(2*math.pi*peak_out_z['Frequency'][index_z])
+            
             disp_sv = np.sqrt(disp_x**2 + disp_y**2 + disp_z**2)
             
             disp_tmp = [d, disp_x, disp_y, disp_z, disp_sv]
@@ -315,49 +415,55 @@ def Special_Disp(seed,n,Delay):
         return pd.DataFrame(disp,columns=['Delay','Disp_X','Disp_Y','Disp_Z','Disp_SV'])
 
 def Special_Energy(seed,n,Delay):
-    vib, amp = Ideal_Test(seed,n,Delay)
+    vib, amp = Ideal_Test(seed,n,Delay,absolute=True)
     
     if np.isscalar(Delay) == True:
         peak_out_x, peak_out_y, peak_out_z = Special_ppvFreq(vib, hei_rop=0.1, dis_rop=25)
 
-        eng_x = max(0.5*(peak_out_x['peak_X']/1e2)**2)
-        eng_y = max(0.5*(peak_out_y['peak_Y']/1e2)**2)
-        eng_z = max(0.5*(peak_out_z['peak_Z']/1e2)**2)
-        eng_sv = 0.5*np.sqrt(max(peak_out_x['peak_X']/1e2)**2 + max(peak_out_y['peak_Y']/1e2)**2 + max(peak_out_z['peak_Z']/1e2)**2)**2
-        
-        energy = [Delay, eng_x, eng_y, eng_z, eng_sv]
-        
-        eng = pd.DataFrame([energy],columns=['Delay','Energy_X','Energy_Y','Energy_Z','Energy_SV'])
+        eng_x = 0.5*(max(peak_out_x['peak_X'])/1e3)**2
+        eng_y = 0.5*(max(peak_out_y['peak_Y'])/1e3)**2
+        eng_z = 0.5*(max(peak_out_z['peak_Z'])/1e3)**2
+            
+        eng_sv = eng_x + eng_y + eng_z
+            
+        energy_tmp = [d, eng_x, eng_y, eng_z, eng_sv]
+        energy.append(energy_tmp)
+        eng_org = pd.DataFrame(energy,columns=['Delay','Energy_X','Energy_Y','Energy_Z','Energy_SV'])
+        eng = eng_org.copy()
         eng['Energy_X'] = 100*(eng['Energy_X']/max(eng['Energy_X']))
         eng['Energy_Y'] = 100*(eng['Energy_Y']/max(eng['Energy_Y']))
         eng['Energy_Z'] = 100*(eng['Energy_Z']/max(eng['Energy_Z']))
         eng['Energy_SV'] = 100*(eng['Energy_SV']/max(eng['Energy_SV']))
+        eng.columns = ['Delay','Energy_%_X','Energy_%_Y','Energy_%_Z','Energy_%_SV']
         
-        return eng
+        return eng_org, eng
     else:
         energy = []
         for d in Delay:
             peak_out_x, peak_out_y, peak_out_z = Special_ppvFreq(vib[vib['Delay']==d].iloc[:,0:4], hei_rop=0.1, dis_rop=25)
 
-            eng_x = max(0.5*(peak_out_x['peak_X']/1e2)**2)
-            eng_y = max(0.5*(peak_out_y['peak_Y']/1e2)**2)
-            eng_z = max(0.5*(peak_out_z['peak_Z']/1e2)**2)
-            eng_sv = 0.5*np.sqrt(max(peak_out_x['peak_X']/1e2)**2 + max(peak_out_y['peak_Y']/1e2)**2 + max(peak_out_z['peak_Z']/1e2)**2)**2
+            eng_x = 0.5*(max(peak_out_x['peak_X'])/1e3)**2
+            eng_y = 0.5*(max(peak_out_y['peak_Y'])/1e3)**2
+            eng_z = 0.5*(max(peak_out_z['peak_Z'])/1e3)**2
+            
+            eng_sv = eng_x + eng_y + eng_z
             
             energy_tmp = [d, eng_x, eng_y, eng_z, eng_sv]
             energy.append(energy_tmp)
-        eng = pd.DataFrame(energy,columns=['Delay','Energy_X','Energy_Y','Energy_Z','Energy_SV'])
+        eng_org = pd.DataFrame(energy,columns=['Delay','Energy_X','Energy_Y','Energy_Z','Energy_SV'])
+        eng = eng_org.copy()
         eng['Energy_X'] = 100*(eng['Energy_X']/max(eng['Energy_X']))
         eng['Energy_Y'] = 100*(eng['Energy_Y']/max(eng['Energy_Y']))
         eng['Energy_Z'] = 100*(eng['Energy_Z']/max(eng['Energy_Z']))
         eng['Energy_SV'] = 100*(eng['Energy_SV']/max(eng['Energy_SV']))
+        eng.columns = ['Delay','Energy_%_X','Energy_%_Y','Energy_%_Z','Energy_%_SV']
         
-        return eng
+        return eng_org, eng
 
 def Full_Module01(directoryPath, file_in = 'wave_01', file_out = 'analysis_01', n=10, Delay=np.arange(0.000,0.101,0.001)):
     
     seed_f = Load_Seed(directoryPath, file_in,scale=False)
-    print('(1/9) - Load SeedWave............. DONE')
+    print('(01/10) - Load SeedWave............. DONE')
     
     #seed_off, offset = Offset(seed_f, offset_lim=0.1)
     #print('(2/9) - Offset... DONE')
@@ -366,16 +472,17 @@ def Full_Module01(directoryPath, file_in = 'wave_01', file_out = 'analysis_01', 
     scaler = MinMaxScaler(feature_range=(-1, 1))
     # transform data
     s_tmp = seed_f.iloc[:, 1:].copy()
-
-    s_tmp = pd.DataFrame(scaler.fit_transform(s_tmp),columns=s_tmp.columns)
-    seed_f2 = seed_f.copy()
-    seed_f2.iloc[:,1:] = s_tmp.iloc[:,0:]
-    print('(2/9) - Processing Procedure...... DONE')
     
-    vib_seed, amp_seed = Ideal_Test(seed_f,n=n,Delay=Delay)
-    vib_seed2, amp_seed2 = Ideal_Test(seed_f2,n=n,Delay=Delay)
+    s_tmp = pd.DataFrame(scaler.fit_transform(s_tmp),columns=s_tmp.columns)
+    
+    #seed_f2 = seed_f.copy()
+    #seed_f2.iloc[:,1:] = s_tmp.iloc[:,0:]
+    print('(02/10) - Processing Procedure...... DONE')
+    
+    vib_seed, amp_seed = Ideal_Test(seed_f,n=n,Delay=Delay,absolute=True)
+    vib_seed2, amp_seed2 = Ideal_Test(seed_f,n=n,Delay=Delay,absolute=False)
     amp_seed.columns = ['Delay','AbsVal Amp_X','AbsVal Amp_Y','AbsVal Amp_Z','AbsVal Amp_SV']
-    print('(3/9) - Ideal Test................ DONE')
+    print('(03/10) - Ideal Test................ DONE')
                        
     ppv_x = pd.DataFrame()
     ppv_y = pd.DataFrame()
@@ -389,7 +496,8 @@ def Full_Module01(directoryPath, file_in = 'wave_01', file_out = 'analysis_01', 
         ppv_x = pd.concat([ppv_x,ppvfreq_x])
         ppv_y = pd.concat([ppv_y,ppvfreq_y])
         ppv_z = pd.concat([ppv_z,ppvfreq_z])
-    print('(4/9) - PPV/Frequency............. DONE')
+    print('(04/10) - PPV/Frequency............. DONE')
+    #print(ppv_y['Delay'].unique())
     
     zc = []
     for dd in Delay:
@@ -403,16 +511,20 @@ def Full_Module01(directoryPath, file_in = 'wave_01', file_out = 'analysis_01', 
         f_tmp = [dd, fx, fy, fz]
         zc.append(f_tmp)
     zc_freq = pd.DataFrame(zc,columns = ['Delay','ZC Freq_X','ZC Freq_Y','ZC Freq_Z'])
-    print('(5/9) - Zero Crossing Frequency... DONE')
+    print('(05/10) - Zero Crossing Frequency... DONE')
       
+    ### AQUÍ LA ACELERACIÓN 
+    acel_g = Special_Acel(seed_f,n,Delay=Delay)
+    print('(06/10) - Particle Aceleration...... DONE')
+    
     disp_seed = Special_Disp(seed_f,n=n,Delay=Delay)
-    print('(6/9) - Particle Displacement..... DONE')
+    print('(07/10) - Particle Displacement..... DONE')
                           
-    eng_seed = Special_Energy(seed_f,n=n,Delay=Delay)
-    print('(7/9) - Energy per Mass Unit...... DONE')
+    eng_org, eng_seed = Special_Energy(seed_f,n=n,Delay=Delay)
+    print('(08/10) - Energy per Mass Unit...... DONE')
                           
     domfreq_seed = Special_DomFreq(seed_f,n=n,Delay=Delay)
-    print('(8/9) - Dominant Frequency........ DONE')   
+    print('(09/10) - Dominant Frequency........ DONE')   
     
     # create a excel writer object
     filename = os.path.join(directoryPath + file_out + '.xlsx')
@@ -422,16 +534,19 @@ def Full_Module01(directoryPath, file_in = 'wave_01', file_out = 'analysis_01', 
         seed_f.to_excel(writer, sheet_name="Seed Wave (mm s)", index=False)
         #seed_off.to_excel(writer, sheet_name="Seed Wave - offset", index=False)
         #offset.to_excel(writer, sheet_name="Offset Values", index=False)
-        seed_f2.to_excel(writer, sheet_name="Seed Wave - Scaled", index=False)
+        seed_f.to_excel(writer, sheet_name="Seed Wave - Scaled", index=False)
         vib_seed.to_excel(writer, sheet_name="Seed Wave Superposition (mm s)", index=False)
+        
         pd.merge(amp_seed,amp_seed2, how="inner", on=["Delay"]).to_excel(writer, sheet_name="Seed Wave Amplification", index=False)
+        
         zc_freq.to_excel(writer, sheet_name="Zero Crossing Frequency (Hz)", startcol=0, index=False)
         ppv_x.to_excel(writer, sheet_name="PPV - Frequency", startcol=0, index=False)
         ppv_y.to_excel(writer, sheet_name="PPV - Frequency", startcol=4, index=False)
         ppv_z.to_excel(writer, sheet_name="PPV - Frequency", startcol=8, index=False)
         domfreq_seed.to_excel(writer, sheet_name="Dominant Frequency (Hz)", index=False)
+        acel_g.to_excel(writer, sheet_name="Particle Max Aceleration (mg)", index=False)
         disp_seed.to_excel(writer, sheet_name="Particle Max Displacement (mm)", index=False)
-        eng_seed.to_excel(writer, sheet_name="Energy per Mass Unit (%)", index=False)
+        pd.merge(eng_org, eng_seed, how="inner", on=["Delay"]).to_excel(writer, sheet_name="Energy per Mass Unit (%)", index=False)
         
-    print('(9/9) - Excel File Saved.......... DONE') 
+    print('(10/10) - Excel File Saved.......... DONE') 
     return
