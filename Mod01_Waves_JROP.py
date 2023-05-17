@@ -17,7 +17,7 @@ import math
 import sys
 import warnings
 
-#warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 __version__ = '1.1'
 
