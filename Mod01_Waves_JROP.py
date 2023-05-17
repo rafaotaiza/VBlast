@@ -333,7 +333,7 @@ def Special_Acel(seed,n,Delay):
         acel_tmp = [d, max(dy1)/(9.8), max(dy2)/(9.8), max(dy3)/(9.8), 
                     np.sqrt(max(dy1)**2 + max(dy2)**2 + max(dy3)**2)/(9.8)]
                     
-        return pd.DataFrame(acel_tmp,columns=['Delay','Acel_X','Acel_Y','Acel_Z','Acel_SV'])
+        return pd.DataFrame([acel_tmp],columns=['Delay','Acel_X','Acel_Y','Acel_Z','Acel_SV'])
     else:
         acel = []
 
