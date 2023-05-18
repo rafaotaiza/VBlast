@@ -17,7 +17,7 @@ import math
 import sys
 import warnings
 
-warnings.filterwarnings("ignore", category=FutureWarning)
+#warnings.filterwarnings("ignore", category=FutureWarning)
 
 __version__ = '1.1'
 
@@ -151,9 +151,10 @@ def Ideal_Test(seed,n,Delay,absolute):
             #print(indx, spacer2[indx,0], np.isclose(h*d, spacer2[:,0], rtol=1e-04, equal_nan=True))
             
             #spacer2[:,0] = np.arange(0,spacer2.shape[0]*dt,dt)
-            spacer2[indx:(indx+seed_tmp.shape[0]),1:5] = spacer2[indx:(indx+seed_tmp.shape[0]),1:5] + seed_tmp.iloc[:,1 :].to_numpy()
+            spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1:4].to_numpy()
+            
+        spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)
         
-        #spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)  
         spacer2[:,5] = d
         if absolute is False:
             amp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
@@ -178,9 +179,10 @@ def Ideal_Test(seed,n,Delay,absolute):
                 indx = np.where(np.isclose(h*d, spacer2[:,0], rtol=1e-04, equal_nan=True))[0][0]
                 #spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1 :].to_numpy()
                 
-                spacer2[indx:(indx+seed_tmp.shape[0]),1:5] = spacer2[indx:(indx+seed_tmp.shape[0]),1:5] + seed_tmp.iloc[:,1:5].to_numpy()
+                spacer2[indx:(indx+seed_tmp.shape[0]),1:4] = spacer2[indx:(indx+seed_tmp.shape[0]),1:4] + seed_tmp.iloc[:,1:4].to_numpy()
             
-            #spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)
+            spacer2[:,4] = np.sqrt(spacer2[:,1]**2 + spacer2[:,2]**2 + spacer2[:,3]**2)
+            
             vib = pd.DataFrame(spacer2,columns=['Time','Filter_X','Filter_Y','Filter_Z','Filter_SV'])
             vib['Delay'] = d
             Vib = pd.concat([Vib,vib])
