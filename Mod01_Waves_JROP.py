@@ -159,7 +159,8 @@ def Ideal_Test(seed,n,Delay,absolute):
         if absolute is False:
             amp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
         else:
-            amp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
+            amp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), 
+                   np.sqrt(max(spacer2[:,1])**2 + max(spacer2[:,2])**2 + max(spacer2[:,3])**2)]
             
         return pd.DataFrame(spacer2,columns=['Time','Filter_X','Filter_Y','Filter_Z','Filter_SV','Delay']), pd.DataFrame([amp],columns=['Delay','Amp_X','Amp_Y','Amp_Z','Amp_SV'])
     else:
@@ -190,7 +191,8 @@ def Ideal_Test(seed,n,Delay,absolute):
             if absolute is False:
                 amp_tmp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
             else:
-                amp_tmp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), max(spacer2[:,4])]
+                amp_tmp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), 
+                           np.sqrt(max(spacer2[:,1])**2 + max(spacer2[:,2])**2 + max(spacer2[:,3])**2)]
 
             amp.append(amp_tmp)
 
