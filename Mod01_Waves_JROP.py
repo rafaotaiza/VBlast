@@ -19,7 +19,7 @@ import warnings
 
 #warnings.filterwarnings("ignore", category=FutureWarning)
 
-__version__ = '1.1'
+__version__ = '1.2'
 
 def Save_Mod01():
     return
