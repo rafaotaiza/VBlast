@@ -157,10 +157,10 @@ def Ideal_Test(seed,n,Delay,absolute):
         
         spacer2[:,5] = d
         if absolute is False:
-            amp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
+            amp = [d, max(abs(spacer2[:,1]))/max(abs(seed_tmp.iloc[:,1])), max(abs(spacer2[:,2]))/max(abs(seed_tmp.iloc[:,2])), max(abs(spacer2[:,3]))/max(abs(seed_tmp.iloc[:,3])), max(abs(spacer2[:,4]))/max(abs(seed_tmp.iloc[:,4]))]
         else:
-            amp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), 
-                   np.sqrt(max(spacer2[:,1])**2 + max(spacer2[:,2])**2 + max(spacer2[:,3])**2)]
+            amp = [d, max(abs(spacer2[:,1])), max(abs(spacer2[:,2])), max(abs(spacer2[:,3])), 
+                   np.sqrt(max(abs(spacer2[:,1]))**2 + max(abs(spacer2[:,2]))**2 + max(abs(spacer2[:,3]))**2)]
             
         return pd.DataFrame(spacer2,columns=['Time','Filter_X','Filter_Y','Filter_Z','Filter_SV','Delay']), pd.DataFrame([amp],columns=['Delay','Amp_X','Amp_Y','Amp_Z','Amp_SV'])
     else:
@@ -189,10 +189,13 @@ def Ideal_Test(seed,n,Delay,absolute):
             Vib = pd.concat([Vib,vib])
             
             if absolute is False:
-                amp_tmp = [d, max(spacer2[:,1])/max(seed_tmp.iloc[:,1]), max(spacer2[:,2])/max(seed_tmp.iloc[:,2]), max(spacer2[:,3])/max(seed_tmp.iloc[:,3]), max(spacer2[:,4])/max(seed_tmp.iloc[:,4])]
+                amp_tmp = [d, max(abs(spacer2[:,1]))/max(abs(seed_tmp.iloc[:,1])),
+                           max(abs(spacer2[:,2]))/max(abs(seed_tmp.iloc[:,2])),
+                           max(abs(spacer2[:,3]))/max(abs(seed_tmp.iloc[:,3])),
+                           max(abs(spacer2[:,4]))/max(abs(seed_tmp.iloc[:,4]))]
             else:
-                amp_tmp = [d, max(spacer2[:,1]), max(spacer2[:,2]), max(spacer2[:,3]), 
-                           np.sqrt(max(spacer2[:,1])**2 + max(spacer2[:,2])**2 + max(spacer2[:,3])**2)]
+                amp_tmp = [d, max(abs(spacer2[:,1])), max(abs(spacer2[:,2])), max(abs(spacer2[:,3])), 
+                           np.sqrt(max(abs(spacer2[:,1]))**2 + max(abs(spacer2[:,2]))**2 + max(abs(spacer2[:,3]))**2)]
 
             amp.append(amp_tmp)
 
@@ -320,15 +323,15 @@ def Special_Acel(seed,n,Delay):
         y2 = vib2['Filter_Y'].values
         y3 = vib2['Filter_Z'].values
 
-        dy1 = np.zeros(y1.shape,np.float)
+        dy1 = np.zeros(y1.shape,float)
         dy1[0:-1] = np.diff(y1)/np.diff(x)
         dy1[-1] = (y1[-1] - y1[-2])/(x[-1] - x[-2])
             
-        dy2 = np.zeros(y2.shape,np.float)
+        dy2 = np.zeros(y2.shape,float)
         dy2[0:-1] = np.diff(y2)/np.diff(x)
         dy2[-1] = (y2[-1] - y2[-2])/(x[-1] - x[-2])
             
-        dy3 = np.zeros(y3.shape,np.float)
+        dy3 = np.zeros(y3.shape,float)
         dy3[0:-1] = np.diff(y3)/np.diff(x)
         dy3[-1] = (y3[-1] - y3[-2])/(x[-1] - x[-2])
             
@@ -350,15 +353,15 @@ def Special_Acel(seed,n,Delay):
             y2 = vib2['Filter_Y'].values
             y3 = vib2['Filter_Z'].values
 
-            dy1 = np.zeros(y1.shape,np.float)
+            dy1 = np.zeros(y1.shape,float)
             dy1[0:-1] = np.diff(y1)/np.diff(x)
             dy1[-1] = (y1[-1] - y1[-2])/(x[-1] - x[-2])
             
-            dy2 = np.zeros(y2.shape,np.float)
+            dy2 = np.zeros(y2.shape,float)
             dy2[0:-1] = np.diff(y2)/np.diff(x)
             dy2[-1] = (y2[-1] - y2[-2])/(x[-1] - x[-2])
             
-            dy3 = np.zeros(y3.shape,np.float)
+            dy3 = np.zeros(y3.shape,float)
             dy3[0:-1] = np.diff(y3)/np.diff(x)
             dy3[-1] = (y3[-1] - y3[-2])/(x[-1] - x[-2])
             
